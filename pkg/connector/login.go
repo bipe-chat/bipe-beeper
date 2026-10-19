@@ -13,14 +13,17 @@ const LoginFlowPhoneQR = "phone-qr"
 var ErrLoginNotBuilt = errors.New("Entrar com o celular ainda não está pronto.")
 
 func (c *Connector) GetLoginFlows() []bridgev2.LoginFlow {
-	return []bridgev2.LoginFlow{{
+	return append([]bridgev2.LoginFlow{{
 		Name:        "Entrar com o celular",
 		Description: "Escaneie um código com o app do Bipe no celular.",
 		ID:          LoginFlowPhoneQR,
-	}}
+	}}, c.devLoginFlows()...)
 }
 
 func (c *Connector) CreateLogin(ctx context.Context, user *bridgev2.User, flowID string) (bridgev2.LoginProcess, error) {
+	if flowID == LoginFlowToken && c.Config.DevTokenLogin {
+		return &TokenLogin{main: c, user: user}, nil
+	}
 	if flowID != LoginFlowPhoneQR {
 		return nil, bridgev2.ErrInvalidLoginFlowID
 	}

@@ -3,6 +3,7 @@ module github.com/bipe-chat/bipe-beeper
 go 1.27.2
 
 require (
+	github.com/rs/zerolog v1.35.1
 	go.mau.fi/util v0.10.1
 	maunium.net/go/mautrix v0.31.0
 )
@@ -17,7 +18,6 @@ require (
 	github.com/mattn/go-sqlite3 v1.14.52 // indirect
 	github.com/petermattis/goid v0.0.0-20260820044319-269ab09b5261 // indirect
 	github.com/rs/xid v1.6.0 // indirect
-	github.com/rs/zerolog v1.35.1 // indirect
 	github.com/skip2/go-qrcode v0.0.0-20200617195104-da1b6568686e // indirect
 	github.com/tidwall/gjson v1.19.0 // indirect
 	github.com/tidwall/match v1.1.1 // indirect
