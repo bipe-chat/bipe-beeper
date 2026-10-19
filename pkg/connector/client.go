@@ -99,6 +99,7 @@ func (c *Client) Connect(ctx context.Context) {
 	}
 	log := c.login.Log.With().Str("action", "connect").Logger()
 	meta := c.login.Metadata.(*UserLoginMetadata)
+	c.useOAuthSession(ctx)
 	c.cli.Syncer = mautrix.NewDefaultSyncer()
 	helper, err := cryptohelper.NewCryptoHelper(c.cli, []byte(meta.PickleKey), cryptoStorePath(c.login.ID))
 	if err != nil {
@@ -108,10 +109,13 @@ func (c *Client) Connect(ctx context.Context) {
 	}
 	helper.DecryptErrorCallback = c.handleDecryptError
 	err = helper.Init(ctx)
+	if errors.Is(err, mautrix.MUnknownToken) && c.oauthSession() != nil && c.recoverUnknownToken(ctx, err) {
+		err = helper.Init(ctx)
+	}
 	if err != nil {
 		log.Err(err).Msg("Failed to start end-to-end encryption")
 		if errors.Is(err, mautrix.MUnknownToken) {
-			c.setBadCredentials(err)
+			c.recoverUnknownToken(ctx, err)
 		} else {
 			c.sendUnknownError("remote-crypto-init-failed", err)
 		}
@@ -135,15 +139,29 @@ func (c *Client) Connect(ctx context.Context) {
 
 func (c *Client) syncLoop(ctx context.Context) {
 	log := zerolog.Ctx(ctx)
+	unknownToken := 0
 	for {
 		err := c.cli.SyncWithContext(ctx)
 		if ctx.Err() != nil {
 			return
 		}
 		if errors.Is(err, mautrix.MUnknownToken) {
-			c.setBadCredentials(err)
+			// A fresh token that is still unknown means the device is gone.
+			unknownToken++
+			if unknownToken > 2 {
+				if s := c.oauthSession(); s != nil {
+					s.Ended(ctx)
+				} else {
+					c.setBadCredentials(err)
+				}
+				return
+			}
+			if c.recoverUnknownToken(ctx, err) {
+				continue
+			}
 			return
 		}
+		unknownToken = 0
 		log.Err(err).Msg("Sync with the remote homeserver stopped, retrying")
 		c.connected.Store(false)
 		c.login.BridgeState.Send(status.BridgeState{
@@ -201,7 +219,14 @@ func (c *Client) LogoutRemote(ctx context.Context) {
 	if c.cli == nil {
 		return
 	}
-	_, err := c.cli.Logout(ctx)
+	var err error
+	if s := c.oauthSession(); s != nil {
+		// With OAuth, revoking the refresh token ends the device session.
+		err = s.Revoke(ctx)
+		c.main.sessions.remove(c.login.ID)
+	} else {
+		_, err = c.cli.Logout(ctx)
+	}
 	if err != nil {
 		zerolog.Ctx(ctx).Err(err).Msg("Failed to sign out of the remote homeserver")
 	}
