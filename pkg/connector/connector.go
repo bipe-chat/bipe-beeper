@@ -22,6 +22,7 @@ var _ bridgev2.NetworkConnector = (*Connector)(nil)
 
 func (c *Connector) Init(bridge *bridgev2.Bridge) {
 	c.br = bridge
+	c.registerCommands()
 }
 
 func (c *Connector) Start(ctx context.Context) error {

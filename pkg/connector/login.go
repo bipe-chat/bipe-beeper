@@ -247,7 +247,6 @@ func (l *PhoneQRLogin) waitForApproval(ctx context.Context) (*bridgev2.LoginStep
 		log.Warn().Str("reason", errorKind(err)).Msg("No E2EE secrets from the phone")
 		secrets = nil
 	}
-	defer secrets.Clear()
 
 	l.setDeviceName(ctx, res)
 
@@ -278,11 +277,6 @@ func (l *PhoneQRLogin) setDeviceName(ctx context.Context, res *qrlogin.Result) {
 	if err != nil {
 		zerolog.Ctx(ctx).Warn().Err(err).Msg("Failed to set the device display name")
 	}
-}
-
-// afterQRLogin hands the E2EE secrets to the crypto setup (bipe#423).
-func (c *Connector) afterQRLogin(ctx context.Context, login *bridgev2.UserLogin, secrets *qrlogin.SecretsBundle) {
-	zerolog.Ctx(ctx).Debug().Bool("has_secrets", secrets != nil).Msg("QR login finished")
 }
 
 func (l *PhoneQRLogin) Cancel() {
