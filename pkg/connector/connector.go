@@ -4,6 +4,7 @@ package connector
 
 import (
 	"context"
+	"time"
 
 	"maunium.net/go/mautrix/bridgev2"
 	"maunium.net/go/mautrix/bridgev2/database"
@@ -12,8 +13,9 @@ import (
 )
 
 type Connector struct {
-	br     *bridgev2.Bridge
-	Config Config
+	br       *bridgev2.Bridge
+	Config   Config
+	sessions sessionRegistry
 }
 
 var _ bridgev2.NetworkConnector = (*Connector)(nil)
@@ -48,15 +50,25 @@ func (c *Connector) GetBridgeInfoVersion() (info, capabilities int) {
 
 func (c *Connector) LoadUserLogin(ctx context.Context, login *bridgev2.UserLogin) error {
 	login.Client = NewClient(c, login)
+	c.sessions.start(c, login)
 	return nil
 }
 
-// UserLoginMetadata is stored for each login. A login flow fills it.
-// The device must be a new device of the remote account: the bridge uploads its own device keys.
+// UserLoginMetadata is stored for each login in the bridge database on the
+// user's machine. A login flow fills it. The device must be a new device of
+// the remote account: the bridge uploads its own device keys. Read and write the
+// token fields only through the login's oauthSession.
 type UserLoginMetadata struct {
 	HomeserverURL string `json:"homeserver_url"`
 	DeviceID      string `json:"device_id"`
-	AccessToken   string `json:"access_token"`
-	// PickleKey encrypts the Olm account in the crypto store of this login.
+	// PickleKey encrypts the Olm account in the crypto store.
 	PickleKey string `json:"pickle_key"`
+
+	AccessToken       string    `json:"access_token"`
+	RefreshToken      string    `json:"refresh_token,omitempty"`
+	AccessTokenExpiry time.Time `json:"access_token_expiry,omitzero"`
+
+	OAuthClientID      string `json:"oauth_client_id,omitempty"`
+	TokenEndpoint      string `json:"oauth_token_endpoint,omitempty"`
+	RevocationEndpoint string `json:"oauth_revocation_endpoint,omitempty"`
 }

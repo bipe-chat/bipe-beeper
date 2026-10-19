@@ -88,11 +88,12 @@ func (l *TokenLogin) SubmitUserInput(ctx context.Context, input map[string]strin
 		DeviceID:      whoami.DeviceID.String(),
 		AccessToken:   token,
 		PickleKey:     base64.RawStdEncoding.EncodeToString(pickleKey),
-	})
+	}, nil)
 }
 
 // completeLogin saves a login and connects it. Every login flow ends here.
-func completeLogin(ctx context.Context, user *bridgev2.User, userID id.UserID, meta *UserLoginMetadata) (*bridgev2.LoginStep, error) {
+// beforeConnect, if set, runs after the save and before the sync starts.
+func completeLogin(ctx context.Context, user *bridgev2.User, userID id.UserID, meta *UserLoginMetadata, beforeConnect func(context.Context, *bridgev2.UserLogin)) (*bridgev2.LoginStep, error) {
 	login, err := user.NewLogin(ctx, &database.UserLogin{
 		ID:         networkid.UserLoginID(userID),
 		RemoteName: userID.String(),
@@ -100,6 +101,9 @@ func completeLogin(ctx context.Context, user *bridgev2.User, userID id.UserID, m
 	}, &bridgev2.NewLoginParams{DeleteOnConflict: true})
 	if err != nil {
 		return nil, fmt.Errorf("failed to save the login: %w", err)
+	}
+	if beforeConnect != nil {
+		beforeConnect(ctx, login)
 	}
 	go login.Client.Connect(login.Log.WithContext(context.Background()))
 	return &bridgev2.LoginStep{
