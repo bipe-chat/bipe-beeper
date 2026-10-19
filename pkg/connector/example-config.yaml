@@ -1,0 +1,2 @@
+# The client-server API of the remote Matrix homeserver.
+homeserver_url: https://matrix.bipe.net.br

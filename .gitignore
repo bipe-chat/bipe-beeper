@@ -1,0 +1,6 @@
+/bipe-beeper
+*.db
+*.db-*
+config.yaml
+registration.yaml
+logs/
