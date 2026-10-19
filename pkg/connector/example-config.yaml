@@ -1,2 +1,5 @@
 # The client-server API of the remote Matrix homeserver.
 homeserver_url: https://matrix.bipe.net.br
+# Development only: enable the "token" login flow, which takes a pasted access token.
+# The token must belong to a new device that has no encryption keys yet.
+dev_token_login: false

@@ -47,12 +47,16 @@ func (c *Connector) GetBridgeInfoVersion() (info, capabilities int) {
 }
 
 func (c *Connector) LoadUserLogin(ctx context.Context, login *bridgev2.UserLogin) error {
-	login.Client = &Client{login: login}
+	login.Client = NewClient(c, login)
 	return nil
 }
 
-// UserLoginMetadata is stored for each login. The QR sign-in (bipe#422) fills it.
+// UserLoginMetadata is stored for each login. A login flow fills it.
+// The device must be a new device of the remote account: the bridge uploads its own device keys.
 type UserLoginMetadata struct {
 	HomeserverURL string `json:"homeserver_url"`
 	DeviceID      string `json:"device_id"`
+	AccessToken   string `json:"access_token"`
+	// PickleKey encrypts the Olm account in the crypto store of this login.
+	PickleKey string `json:"pickle_key"`
 }
