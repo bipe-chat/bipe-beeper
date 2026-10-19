@@ -14,9 +14,12 @@ import (
 	"maunium.net/go/mautrix/bridgev2"
 	"maunium.net/go/mautrix/bridgev2/networkid"
 	"maunium.net/go/mautrix/bridgev2/status"
+	"maunium.net/go/mautrix/crypto/backup"
 	"maunium.net/go/mautrix/crypto/cryptohelper"
 	"maunium.net/go/mautrix/event"
 	"maunium.net/go/mautrix/id"
+
+	"github.com/bipe-chat/bipe-beeper/pkg/qrlogin"
 )
 
 // Client is the Matrix client of one login on the remote homeserver.
@@ -39,6 +42,14 @@ type Client struct {
 
 	typingLock sync.Mutex
 	typing     map[id.RoomID]map[id.UserID]struct{}
+
+	// E2EE setup (crypto.go). pendingSecrets holds the secrets of a new QR
+	// login until Connect imports them.
+	pendingSecrets *qrlogin.SecretsBundle
+	backupLock     sync.Mutex
+	backupKey      *backup.MegolmBackupKey
+	backupVersion  id.KeyBackupVersion
+	verification   *sasVerification
 }
 
 var (
@@ -129,6 +140,7 @@ func (c *Client) Connect(ctx context.Context) {
 	syncer.OnSync(c.handleSync)
 	syncer.OnEvent(c.handleEvent)
 
+	c.setupE2EE(ctx)
 	c.loadDirectRooms(ctx)
 	c.login.BridgeState.Send(status.BridgeState{StateEvent: status.StateConnecting})
 
