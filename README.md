@@ -2,7 +2,7 @@
 
 Your Bipe chats in [Beeper](https://www.beeper.com), through a bridge that you run on your own computer.
 
-Status: early. The bridge syncs the chats of a Bipe account into Beeper (bipe-chat/bipe#424). Sign-in with the phone is not built yet (bipe-chat/bipe#422). Until then, developers sign in with an access token (see "Development sign-in").
+Status: early. The bridge syncs the chats of a Bipe account into Beeper, and you sign in with the phone (bipe-chat/bipe#422, bipe-chat/bipe#423). The hand test between Beeper and a Bipe phone has not passed yet (bipe-chat/bipe#427).
 
 ## How it works
 
@@ -14,49 +14,32 @@ Decision record: [ADR 0128](https://github.com/bipe-chat/bipe/blob/main/docs/adr
 
 ## Run it
 
-You need Go 1.27, a C compiler (for SQLite) and a Beeper account.
+Follow [docs/setup.md](docs/setup.md). It covers what you need, `bbctl`, the config, the build, the sign-in with the phone, what leaves Brazil, how to turn the bridge off, a service for macOS and Linux, updates and troubleshooting.
 
-```bash
-brew install beeper/tap/bbctl
-```
+The short version, with Go 1.27, a C compiler and `bbctl` installed:
 
 ```bash
 bbctl login
 ```
 
 ```bash
-bbctl config --type bridgev2 sh-bipe -o config.yaml
+bbctl config --type bridgev2 -o config.yaml sh-bipe
 ```
 
-Add the `network` section to `config.yaml`:
-
-```yaml
-network:
-    homeserver_url: https://matrix.bipe.net.br
-```
-
-Build and start the bridge:
+Set `network.homeserver_url: https://matrix.bipe.net.br` in `config.yaml`, then:
 
 ```bash
 ./build.sh && ./bipe-beeper -c config.yaml
 ```
 
-To get the last 50 messages of each chat on the first sync, set these values in the `backfill` section of `config.yaml`:
-
-```yaml
-backfill:
-    enabled: true
-    max_initial_messages: 50
-```
-
-Then open a DM with `@sh-bipebot:beeper.local` in Beeper and send `login`.
+Open a chat with `@sh-bipebot:beeper.local` in Beeper, send `login` and scan the code with Bipe on the phone (Configurações > Aparelhos conectados > Conectar um computador).
 
 ## Development sign-in
 
-Until the phone sign-in exists, a developer can sign in with an access token. Set `dev_token_login: true` in the `network` section, then send `login token` to the bridge bot and paste the token.
+For development, a developer can sign in with an access token. Set `dev_token_login: true` in the `network` section, then send `login token` to the bridge bot and paste the token.
 
 - The token must belong to a new device of the account. The bridge uploads its own encryption keys for that device. A token copied from another app's device does not work.
-- The new device gets keys only for messages sent after it signs in. Older encrypted messages show as "Não deu para ler esta mensagem aqui. Abra o Bipe para ver." The phone sign-in (bipe-chat/bipe#422) brings the key backup.
+- The new device gets keys only for messages sent after it signs in. Older encrypted messages show as "Não deu para ler esta mensagem aqui. Abra o Bipe para ver." The phone sign-in brings the key backup.
 - Do not use this on real accounts. The default is `false`.
 
 ## Events
@@ -94,7 +77,7 @@ Both sides are Matrix, so most events map one to one. The bridge keeps the remot
 | Leaving a room on Bipe | `m.room.member` leave | One way, Bipe to Beeper. The chat goes away in Beeper. |
 | History | `/messages` | One way, Bipe to Beeper. The last 50 messages on the first sync, more on scroll. |
 | Messages without a key on the bridge device | `m.room.encrypted` | One way, as a notice |
-| Bipe-only and unknown events | any other type or msgtype | One way, as "Mensagem do Bipe. Abra o app para ver." (bipe-chat/bipe#425 adds a fallback for each type) |
+| Bipe-only and unknown events | any other type or msgtype | One way, as "Mensagem do Bipe. Abra o app para ver." (bipe-chat/bipe#425 adds a fallback for each Bipe-only type when the first one exists) |
 | Power levels, join rules | state | Not bridged |
 | Calls | `m.call.*`, MatrixRTC | Not bridged |
 | Verification | `m.key.verification.*` | Not bridged |
