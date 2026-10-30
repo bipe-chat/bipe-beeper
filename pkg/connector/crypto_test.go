@@ -6,19 +6,21 @@ import (
 	"maunium.net/go/mautrix/crypto"
 	"maunium.net/go/mautrix/crypto/backup"
 	"maunium.net/go/mautrix/id"
+
+	"github.com/bipe-chat/bipe-beeper/pkg/e2ee"
 )
 
 // The secrets bundle from the matrix-rust-sdk test serialize_secrets_bundle.
 func TestSecretsDecode(t *testing.T) {
 	var seeds crypto.CrossSigningSeeds
 	var err error
-	if seeds.MasterKey, err = decodeSecret("rTtSv67XGS6k/rg6/yTG/m573cyFTPFRqluFhQY+hSw"); err != nil {
+	if seeds.MasterKey, err = e2ee.DecodeSecret("rTtSv67XGS6k/rg6/yTG/m573cyFTPFRqluFhQY+hSw"); err != nil {
 		t.Fatal(err)
 	}
-	if seeds.SelfSigningKey, err = decodeSecret("4jbPt7jh5D2iyM4U+3IDa+WthgJB87IQN1ATdkau+xk"); err != nil {
+	if seeds.SelfSigningKey, err = e2ee.DecodeSecret("4jbPt7jh5D2iyM4U+3IDa+WthgJB87IQN1ATdkau+xk"); err != nil {
 		t.Fatal(err)
 	}
-	if seeds.UserSigningKey, err = decodeSecret("YkFKtkjcsTxF6UAzIIG/l6Nog/G2RigCRfWj3cjNWeM="); err != nil {
+	if seeds.UserSigningKey, err = e2ee.DecodeSecret("YkFKtkjcsTxF6UAzIIG/l6Nog/G2RigCRfWj3cjNWeM="); err != nil {
 		t.Fatal("padded base64 must decode too:", err)
 	}
 	keys, err := seeds.Decode()
@@ -30,7 +32,7 @@ func TestSecretsDecode(t *testing.T) {
 		t.Fatal("bad public keys")
 	}
 
-	raw, err := decodeSecret("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA")
+	raw, err := e2ee.DecodeSecret("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA")
 	if err != nil || len(raw) != 32 {
 		t.Fatalf("backup key: %v", err)
 	}
