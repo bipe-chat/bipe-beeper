@@ -10,6 +10,7 @@ import (
 
 	"github.com/modelcontextprotocol/go-sdk/mcp"
 	"github.com/rs/zerolog"
+	"maunium.net/go/mautrix"
 	"maunium.net/go/mautrix/id"
 
 	"github.com/bipe-chat/bipe-beeper/pkg/bipe"
@@ -298,6 +299,14 @@ func TestSetFullContent(t *testing.T) {
 	}
 	if _, msg := call(t, svc, "read_chat", `{"room_id":"!chat:bipe.net.br"}`); msg != bipe.MCPFullContentOff {
 		t.Fatalf("read after failed send: %q", msg)
+	}
+	// A room where members cannot set state (bipe-chat/bipe#879) names the cause, and full content stays off.
+	f.setStateErr = mautrix.MForbidden
+	if _, msg := call(t, svc, "set_full_content", `{"room_id":"!chat:bipe.net.br","enabled":true}`); msg != bipe.MCPFullContentForbidden {
+		t.Fatalf("forbidden: %q", msg)
+	}
+	if _, msg := call(t, svc, "read_chat", `{"room_id":"!chat:bipe.net.br"}`); msg != bipe.MCPFullContentOff {
+		t.Fatalf("read after forbidden: %q", msg)
 	}
 	f.setStateErr = nil
 
