@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"sync"
 
+	"maunium.net/go/mautrix"
 	"maunium.net/go/mautrix/id"
 
 	"github.com/bipe-chat/bipe-beeper/pkg/bipe"
@@ -308,6 +309,10 @@ func (s *Service) setFullContent(ctx context.Context, args json.RawMessage) (any
 	}
 	err = s.mx.SetRoomState(ctx, roomID, bipe.FullContentEventType, string(s.mx.UserID()), FullContentState(on))
 	if err != nil {
+		// Old rooms let only admins set room state (bipe-chat/bipe#879). Say why, so the user can ask an admin.
+		if on && errors.Is(err, mautrix.MForbidden) {
+			return nil, userError(bipe.MCPFullContentForbidden)
+		}
 		return nil, wrap(err, failMsg)
 	}
 	return map[string]any{"room_id": roomID, "full_content": on}, nil

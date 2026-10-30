@@ -40,9 +40,11 @@ const (
 	MCPFullContentOff    = "A leitura completa desta conversa está desligada. Use set_full_content para ligar. Todo mundo da conversa vai ver um aviso."
 	MCPFullContentOnErr  = "Não deu para ligar a leitura completa. Ela continua desligada."
 	MCPFullContentOffErr = "Não deu para desligar a leitura completa. Tente de novo."
-	MCPSendSwitchOff     = "O assistente não pode enviar mensagens. Para permitir, ligue \"Assistente pode enviar\" em Bipe > Configurações > Privacidade. Ou use draft_message: o rascunho aparece no celular e você mesmo envia."
-	MCPSendFailed        = "Não deu para enviar a mensagem."
-	MCPDraftFailed       = "Não deu para salvar o rascunho."
-	MCPReadFailed        = "Não deu para ler as mensagens."
-	MCPListFailed        = "Não deu para listar as conversas."
+	// bipe-chat/bipe#879: rooms made before the fix keep power levels where only admins set room state.
+	MCPFullContentForbidden = "Esta conversa não deixa você ligar a leitura completa: ela foi criada antes dessa opção existir. Peça para quem administra a conversa permitir o aviso de assistente. A leitura completa continua desligada."
+	MCPSendSwitchOff        = "O assistente não pode enviar mensagens. Para permitir, ligue \"Assistente pode enviar\" em Bipe > Configurações > Privacidade. Ou use draft_message: o rascunho aparece no celular e você mesmo envia."
+	MCPSendFailed           = "Não deu para enviar a mensagem."
+	MCPDraftFailed          = "Não deu para salvar o rascunho."
+	MCPReadFailed           = "Não deu para ler as mensagens."
+	MCPListFailed           = "Não deu para listar as conversas."
 )
