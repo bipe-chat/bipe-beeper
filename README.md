@@ -34,6 +34,10 @@ Set `network.homeserver_url: https://matrix.bipe.net.br` in `config.yaml`, then:
 
 Open a chat with `@sh-bipebot:beeper.local` in Beeper, send `login` and scan the code with Bipe on the phone (Configurações > Aparelhos conectados > Conectar um computador).
 
+## bipe-mcp: your chats in your own AI assistant
+
+This repository also builds `bipe-mcp`, an MCP server that runs on your computer and gives an MCP client (Claude Desktop, Cursor and others) your own Bipe chats over stdio. It signs in with the phone like the bridge. By default the client reads only your own messages and writes drafts; you send them from the phone. Install, sign-in, scopes, the send switch and what leaves your computer: [docs/bipe-mcp.md](docs/bipe-mcp.md) (bipe-chat/bipe#439).
+
 ## Development sign-in
 
 For development, a developer can sign in with an access token. Set `dev_token_login: true` in the `network` section, then send `login token` to the bridge bot and paste the token.

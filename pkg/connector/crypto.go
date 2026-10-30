@@ -2,9 +2,7 @@ package connector
 
 import (
 	"context"
-	"encoding/base64"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"strings"
 	"sync"
@@ -19,6 +17,7 @@ import (
 	"maunium.net/go/mautrix/id"
 
 	"github.com/bipe-chat/bipe-beeper/pkg/bipe"
+	"github.com/bipe-chat/bipe-beeper/pkg/e2ee"
 	"github.com/bipe-chat/bipe-beeper/pkg/qrlogin"
 )
 
@@ -95,127 +94,26 @@ func (c *Client) setupE2EE(ctx context.Context) {
 	}
 }
 
-func decodeSecret(s string) ([]byte, error) {
-	s = strings.TrimRight(s, "=")
-	return base64.RawStdEncoding.DecodeString(s)
-}
-
-// importSecrets checks the cross-signing keys against the public keys on
-// the server, imports them, signs this device, and keeps the backup key.
+// importSecrets imports the secrets from the phone and keeps the backup key.
 func (c *Client) importSecrets(ctx context.Context, mach *crypto.OlmMachine, secrets *qrlogin.SecretsBundle) error {
-	var seeds crypto.CrossSigningSeeds
-	var err error
-	if seeds.MasterKey, err = decodeSecret(secrets.CrossSigning.MasterKey); err != nil {
-		return errors.New("invalid master key")
-	}
-	if seeds.SelfSigningKey, err = decodeSecret(secrets.CrossSigning.SelfSigningKey); err != nil {
-		return errors.New("invalid self-signing key")
-	}
-	if seeds.UserSigningKey, err = decodeSecret(secrets.CrossSigning.UserSigningKey); err != nil {
-		return errors.New("invalid user-signing key")
-	}
-	defer func() {
-		clear(seeds.MasterKey)
-		clear(seeds.SelfSigningKey)
-		clear(seeds.UserSigningKey)
-	}()
-	if err = c.checkCrossSigningKeys(ctx, seeds); err != nil {
+	key, err := e2ee.ImportSecrets(ctx, c.cli, mach, secrets)
+	if err != nil {
 		return err
 	}
-	if err = mach.ImportCrossSigningKeys(seeds); err != nil {
-		return errors.New("failed to import the cross-signing keys")
+	if key != nil {
+		c.backupKey = key
 	}
-	for name, seed := range map[id.Secret][]byte{
-		id.SecretXSMaster:      seeds.MasterKey,
-		id.SecretXSSelfSigning: seeds.SelfSigningKey,
-		id.SecretXSUserSigning: seeds.UserSigningKey,
-	} {
-		if err = mach.CryptoStore.PutSecret(ctx, name, base64.RawStdEncoding.EncodeToString(seed)); err != nil {
-			return fmt.Errorf("failed to store the cross-signing keys: %w", err)
-		}
-	}
-	if err = mach.SignOwnDevice(ctx, mach.OwnIdentity()); err != nil {
-		return fmt.Errorf("failed to sign the bridge device: %w", err)
-	}
-
-	if secrets.Backup == nil {
-		return nil
-	} else if secrets.Backup.Algorithm != string(id.KeyBackupAlgorithmMegolmBackupV1) {
-		return fmt.Errorf("unsupported key backup algorithm %s", secrets.Backup.Algorithm)
-	}
-	raw, err := decodeSecret(secrets.Backup.Key)
-	if err != nil {
-		return errors.New("invalid backup key")
-	}
-	defer clear(raw)
-	key, err := backup.MegolmBackupKeyFromBytes(raw)
-	if err != nil {
-		return errors.New("invalid backup key")
-	}
-	if err = mach.CryptoStore.PutSecret(ctx, id.SecretMegolmBackupV1, base64.RawStdEncoding.EncodeToString(raw)); err != nil {
-		return fmt.Errorf("failed to store the backup key: %w", err)
-	}
-	c.backupKey = key
 	return nil
-}
-
-// checkCrossSigningKeys refuses keys whose public master key is not the one
-// on the server. The phone is authenticated, but a wrong key must not sign
-// this device.
-func (c *Client) checkCrossSigningKeys(ctx context.Context, seeds crypto.CrossSigningSeeds) error {
-	keys, err := seeds.Decode()
-	if err != nil {
-		return errors.New("invalid cross-signing keys")
-	}
-	resp, err := c.cli.QueryKeys(ctx, &mautrix.ReqQueryKeys{DeviceKeys: mautrix.DeviceKeysRequest{c.userID: {}}})
-	if err != nil {
-		return fmt.Errorf("failed to query the cross-signing keys: %w", err)
-	}
-	master, ok := resp.MasterKeys[c.userID]
-	if !ok {
-		return errors.New("the account has no cross-signing master key")
-	}
-	want := keys.MasterKey.PublicKey()
-	for _, key := range master.Keys {
-		if key == want {
-			return nil
-		}
-	}
-	return errors.New("the master key from the phone does not match the server")
 }
 
 // loadStoredSecrets reads the keys that an earlier login stored.
 func (c *Client) loadStoredSecrets(ctx context.Context, mach *crypto.OlmMachine) error {
-	var seeds crypto.CrossSigningSeeds
-	for name, dst := range map[id.Secret]*[]byte{
-		id.SecretXSMaster:      (*[]byte)(&seeds.MasterKey),
-		id.SecretXSSelfSigning: (*[]byte)(&seeds.SelfSigningKey),
-		id.SecretXSUserSigning: (*[]byte)(&seeds.UserSigningKey),
-	} {
-		value, err := mach.CryptoStore.GetSecret(ctx, name)
-		if err != nil {
-			return err
-		} else if value == "" {
-			return nil
-		}
-		if *dst, err = decodeSecret(value); err != nil {
-			return errors.New("invalid stored cross-signing key")
-		}
-	}
-	if err := mach.ImportCrossSigningKeys(seeds); err != nil {
-		return errors.New("invalid stored cross-signing keys")
-	}
-	value, err := mach.CryptoStore.GetSecret(ctx, id.SecretMegolmBackupV1)
-	if err != nil || value == "" {
+	key, err := e2ee.LoadStoredSecrets(ctx, mach)
+	if err != nil {
 		return err
 	}
-	raw, err := decodeSecret(value)
-	if err != nil {
-		return errors.New("invalid stored backup key")
-	}
-	defer clear(raw)
-	if c.backupKey, err = backup.MegolmBackupKeyFromBytes(raw); err != nil {
-		return errors.New("invalid stored backup key")
+	if key != nil {
+		c.backupKey = key
 	}
 	return nil
 }
