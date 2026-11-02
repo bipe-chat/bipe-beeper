@@ -4,12 +4,14 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"os"
 	"strings"
 	"testing"
 
 	"github.com/modelcontextprotocol/go-sdk/mcp"
 	"github.com/rs/zerolog"
+	"maunium.net/go/mautrix"
 	"maunium.net/go/mautrix/id"
 
 	"github.com/bipe-chat/bipe-beeper/pkg/bipe"
@@ -292,9 +294,14 @@ func TestSetFullContent(t *testing.T) {
 	key := "!chat:bipe.net.br|chat.bipe.assistant|" + string(own)
 
 	// A failed send keeps full content off.
-	f.setStateErr = errors.New("M_FORBIDDEN")
+	f.setStateErr = errors.New("connection reset")
 	if _, msg := call(t, svc, "set_full_content", `{"room_id":"!chat:bipe.net.br","enabled":true}`); msg != bipe.MCPFullContentOnErr {
 		t.Fatalf("failed send: %q", msg)
+	}
+	// An old room refuses the marker: the user learns that an admin must allow it.
+	f.setStateErr = fmt.Errorf("send state: %w", mautrix.MForbidden)
+	if _, msg := call(t, svc, "set_full_content", `{"room_id":"!chat:bipe.net.br","enabled":true}`); msg != bipe.MCPFullContentForbidden {
+		t.Fatalf("forbidden send: %q", msg)
 	}
 	if _, msg := call(t, svc, "read_chat", `{"room_id":"!chat:bipe.net.br"}`); msg != bipe.MCPFullContentOff {
 		t.Fatalf("read after failed send: %q", msg)

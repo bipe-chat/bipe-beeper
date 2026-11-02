@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"sync"
 
+	"maunium.net/go/mautrix"
 	"maunium.net/go/mautrix/id"
 
 	"github.com/bipe-chat/bipe-beeper/pkg/bipe"
@@ -307,6 +308,10 @@ func (s *Service) setFullContent(ctx context.Context, args json.RawMessage) (any
 		return nil, userError(bipe.MCPNotJoined)
 	}
 	err = s.mx.SetRoomState(ctx, roomID, bipe.FullContentEventType, string(s.mx.UserID()), FullContentState(on))
+	if on && errors.Is(err, mautrix.MForbidden) {
+		// An old room: its power levels keep the marker at state_default (bipe#879).
+		return nil, userError(bipe.MCPFullContentForbidden)
+	}
 	if err != nil {
 		return nil, wrap(err, failMsg)
 	}
