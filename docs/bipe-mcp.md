@@ -137,7 +137,7 @@ Only one client at a time can use one account folder. For a second client at the
 - The rules live in honest clients. A modified client can leave out the assistant marker or ignore full reading (ADR 0130, ADR 0210).
 - `bipe-mcp` is an unattested device (ADR 0043).
 - Notes are not in `read_my_messages` yet.
-- `set_full_content` needs the right to send the state event `chat.bipe.assistant` in that chat. Where the power levels do not allow it, the write fails and full reading stays off.
+- `set_full_content` needs the right to send the state event `chat.bipe.assistant` in that chat. New DMs and groups allow it (bipe-chat/bipe#879). Chats made before that do not: the tool answers that an admin must allow the assistant notice, and full reading stays off.
 - On Windows there is no lock against a second `bipe-mcp` on the same folder. Two copies refresh the same token, and the server ends the session.
 - New room keys of `bipe-mcp` go to your other devices by key sharing. `bipe-mcp` does not upload them to the key backup yet.
 
