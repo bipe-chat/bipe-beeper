@@ -13,7 +13,7 @@ type Config struct {
 	// HomeserverURL is the client-server API of the remote Matrix homeserver.
 	HomeserverURL string `yaml:"homeserver_url"`
 	// DevTokenLogin enables the "token" login flow, which takes a pasted access token.
-	// It is for development only, until the QR sign-in (bipe#422) exists.
+	// It is for development only. People sign in with the QR flow.
 	DevTokenLogin bool `yaml:"dev_token_login"`
 }
 

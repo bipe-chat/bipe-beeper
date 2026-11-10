@@ -94,7 +94,7 @@ Both sides are Matrix, so most events map one to one. The bridge keeps the remot
 ./build.sh
 ```
 
-Always build with `-tags goolm`. The green gate is `go build -tags goolm ./... && go vet -tags goolm ./...`.
+Always build with `-tags goolm`. The green gate is `go build -tags goolm ./... && go vet -tags goolm ./... && go test -tags goolm ./...`.
 
 ## License
 

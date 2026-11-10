@@ -15,7 +15,7 @@ import (
 )
 
 // LoginFlowToken is the development login. It takes an access token of a new device.
-// It exists only when network.dev_token_login is true, until the QR sign-in (bipe#422) is built.
+// It exists only when network.dev_token_login is true.
 const LoginFlowToken = "token"
 
 func (c *Connector) devLoginFlows() []bridgev2.LoginFlow {
