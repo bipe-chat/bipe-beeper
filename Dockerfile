@@ -7,7 +7,7 @@ COPY . .
 RUN ./build.sh
 
 FROM alpine:3.22
-RUN apk add --no-cache ca-certificates su-exec
+RUN apk add --no-cache ca-certificates
 COPY --from=builder /build/bipe-beeper /usr/bin/bipe-beeper
 VOLUME /data
 WORKDIR /data

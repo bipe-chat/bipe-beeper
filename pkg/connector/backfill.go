@@ -68,7 +68,7 @@ func (c *Client) FetchMessages(ctx context.Context, params bridgev2.FetchMessage
 func (c *Client) backfillMessages(ctx context.Context, portal *bridgev2.Portal, roomID id.RoomID, events []*event.Event) []*bridgev2.BackfillMessage {
 	log := zerolog.Ctx(ctx)
 	var messages []*event.Event
-	edits := make(map[id.EventID]*event.Event)
+	edits := map[id.EventID][]*event.Event{}
 	reactions := make(map[id.EventID][]*event.Event)
 	for _, evt := range events {
 		evt.RoomID = roomID
@@ -97,7 +97,7 @@ func (c *Client) backfillMessages(ctx context.Context, portal *bridgev2.Portal, 
 		}
 		if content, ok := evt.Content.Parsed.(*event.MessageEventContent); ok {
 			if target := content.RelatesTo.GetReplaceID(); target != "" {
-				edits[target] = evt
+				edits[target] = append(edits[target], evt)
 				continue
 			}
 		}
@@ -111,7 +111,7 @@ func (c *Client) backfillMessages(ctx context.Context, portal *bridgev2.Portal, 
 		if !ok {
 			continue
 		}
-		converted, err := c.convertToMatrix(ctx, portal, intent, applyEdit(evt, edits[evt.ID]))
+		converted, err := c.convertToMatrix(ctx, portal, intent, applyEdit(evt, latestEdit(evt, edits[evt.ID])))
 		if err != nil {
 			log.Err(err).Stringer("event_id", evt.ID).Msg("Failed to convert a backfill event")
 			continue
@@ -133,6 +133,17 @@ func (c *Client) backfillMessages(ctx context.Context, portal *bridgev2.Portal, 
 		out = append(out, msg)
 	}
 	return out
+}
+
+// latestEdit gives the last edit of evt by its own sender, or nil. An edit from another
+// sender is not valid (Matrix spec, event replacements) and is ignored.
+func latestEdit(evt *event.Event, edits []*event.Event) *event.Event {
+	for i := len(edits) - 1; i >= 0; i-- {
+		if edits[i].Sender == evt.Sender {
+			return edits[i]
+		}
+	}
+	return nil
 }
 
 // applyEdit gives the event with the content of its latest edit. The relations of the original stay.
