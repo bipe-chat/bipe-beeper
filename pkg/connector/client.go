@@ -50,6 +50,10 @@ type Client struct {
 	backupKey      *backup.MegolmBackupKey
 	backupVersion  id.KeyBackupVersion
 	verification   *sasVerification
+
+	// deviceEntryOnce writes the device entry once per connection of the
+	// login (deviceinfo.go).
+	deviceEntryOnce sync.Once
 }
 
 var (

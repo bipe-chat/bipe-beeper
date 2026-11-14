@@ -150,18 +150,7 @@ func UTF16Len(s string) int {
 // the MCP initialize clientInfo.name: trimmed, cut to the registry limit.
 // A blank name becomes DefaultClientName.
 func ClientName(name string) string {
-	name = strings.TrimSpace(name)
-	limit := min(drafts.ClientMaxLength, mcpRegistry.PersonalSend.ClientMaxLength)
-	if UTF16Len(name) > limit {
-		n := 0
-		for i, r := range name {
-			if n+utf16.RuneLen(r) > limit {
-				name = strings.TrimSpace(name[:i])
-				break
-			}
-			n += utf16.RuneLen(r)
-		}
-	}
+	name = CutUTF16(name, min(drafts.ClientMaxLength, mcpRegistry.PersonalSend.ClientMaxLength))
 	if name == "" {
 		return DefaultClientName
 	}

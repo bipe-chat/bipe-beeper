@@ -169,17 +169,7 @@ func (e *toolFailure) Unwrap() error { return e.cause }
 
 // draftsRoomID returns the drafts room ID from the account data, or "".
 func (s *Service) draftsRoomID(ctx context.Context) (id.RoomID, error) {
-	raw, err := s.mx.AccountData(ctx, bipe.DraftsRegistry().AccountDataType)
-	if err != nil || raw == nil {
-		return "", err
-	}
-	var ad struct {
-		RoomID string `json:"room_id"`
-	}
-	if json.Unmarshal(raw, &ad) != nil || !validRoomID(ad.RoomID) {
-		return "", nil
-	}
-	return id.RoomID(ad.RoomID), nil
+	return bipe.DraftsRoomID(ctx, s.mx)
 }
 
 func (s *Service) listChats(ctx context.Context) (any, error) {
@@ -318,28 +308,12 @@ func (s *Service) setFullContent(ctx context.Context, args json.RawMessage) (any
 	return map[string]any{"room_id": roomID, "full_content": on}, nil
 }
 
-// draftsRoom returns the drafts room, and creates it when the account data
-// names none or names a room the user is not in. An error reading the
-// account data stops the draft: a device never makes a second room.
+// draftsRoom returns the drafts room, and creates it when needed
+// (bipe.DraftsRoom).
 func (s *Service) draftsRoom(ctx context.Context, joined []id.RoomID) (id.RoomID, error) {
 	s.draftsLock.Lock()
 	defer s.draftsLock.Unlock()
-	d := bipe.DraftsRegistry()
-	roomID, err := s.draftsRoomID(ctx)
-	if err != nil {
-		return "", err
-	}
-	if roomID != "" && containsRoom(joined, roomID) {
-		return roomID, nil
-	}
-	roomID, err = s.mx.CreateDraftsRoom(ctx, bipe.DraftsRoomName, d.RoomType)
-	if err != nil {
-		return "", err
-	}
-	if err = s.mx.SetAccountData(ctx, d.AccountDataType, map[string]any{"room_id": roomID}); err != nil {
-		return "", err
-	}
-	return roomID, nil
+	return bipe.DraftsRoom(ctx, s.mx, joined)
 }
 
 func (s *Service) messageInput(ctx context.Context, args json.RawMessage, failMsg string) (MessageInput, []id.RoomID, error) {
