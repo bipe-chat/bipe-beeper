@@ -39,13 +39,27 @@ const messageSchema = `{"type":"object","required":["room_id","body"],"additiona
 
 // NewServer makes the MCP server. It lists only the tools whose scope is
 // granted; the SDK answers a call to any other tool with an error.
-func NewServer(svc *Service, version string, log zerolog.Logger) *mcp.Server {
-	server := mcp.NewServer(&mcp.Implementation{Name: "bipe-mcp", Title: "Bipe", Version: version}, &mcp.ServerOptions{
+// onInit, when set, gets the MCP clientInfo.name after the client sends
+// initialized. It must not block.
+func NewServer(svc *Service, version string, log zerolog.Logger, onInit func(client string)) *mcp.Server {
+	opts := &mcp.ServerOptions{
 		Instructions: "Tools for the user's own Bipe chats. Prefer draft_message: the user sends the draft from the phone.",
 		// The SDK logs only protocol events. Keep them off: stdout is the
 		// protocol and the log must never hold message text.
 		Logger: slog.New(slog.DiscardHandler),
-	})
+	}
+	if onInit != nil {
+		opts.InitializedHandler = func(_ context.Context, req *mcp.InitializedRequest) {
+			client := ""
+			if req != nil && req.Session != nil {
+				if p := req.Session.InitializeParams(); p != nil && p.ClientInfo != nil {
+					client = p.ClientInfo.Name
+				}
+			}
+			onInit(client)
+		}
+	}
+	server := mcp.NewServer(&mcp.Implementation{Name: "bipe-mcp", Title: "Bipe", Version: version}, opts)
 	for _, t := range svc.Scopes().Tools() {
 		readOnly := t.Writes == "none"
 		destructive := false

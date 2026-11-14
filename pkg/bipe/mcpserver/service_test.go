@@ -194,7 +194,7 @@ func TestServerListsGrantedTools(t *testing.T) {
 	ctx := context.Background()
 	f := newFake()
 	s, _ := ParseScopes("")
-	server := NewServer(NewService(f, s), "test", zerolog.Nop())
+	server := NewServer(NewService(f, s), "test", zerolog.Nop(), nil)
 	st, ct := mcp.NewInMemoryTransports()
 	ss, err := server.Connect(ctx, st, nil)
 	if err != nil {

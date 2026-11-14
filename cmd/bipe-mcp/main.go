@@ -14,6 +14,7 @@ import (
 	"os"
 	"os/signal"
 	"path/filepath"
+	"sync"
 	"syscall"
 
 	"github.com/modelcontextprotocol/go-sdk/mcp"
@@ -139,7 +140,11 @@ func serve(ctx context.Context, dir string, sess *storedSession, scopes mcpserve
 	go tokens.run(ctx)
 	m.startSync(ctx)
 	log.Info().Str("scopes", scopes.String()).Msg("Serving MCP on stdio")
-	server := mcpserver.NewServer(mcpserver.NewService(m, scopes), Version, log)
+	svc := mcpserver.NewService(m, scopes)
+	var once sync.Once
+	server := mcpserver.NewServer(svc, Version, log, func(client string) {
+		once.Do(func() { go writeDeviceInfo(ctx, dir, sess, svc, client, log) })
+	})
 	return server.Run(ctx, &mcp.StdioTransport{})
 }
 
@@ -152,7 +157,7 @@ func runLogout(ctx context.Context, dir string, stderr io.Writer, log zerolog.Lo
 	if err = newTokenKeeper(dir, sess, log).revoke(ctx); err != nil {
 		log.Warn().Str("reason", errorKind(err)).Msg("Failed to revoke the session")
 	}
-	for _, p := range []string{sessionPath(dir), cryptoPath(dir), cryptoPath(dir) + "-wal", cryptoPath(dir) + "-shm"} {
+	for _, p := range sessionFiles(dir) {
 		if err = os.Remove(p); err != nil && !errors.Is(err, os.ErrNotExist) {
 			fmt.Fprintln(stderr, "bipe-mcp:", err)
 			return 1
