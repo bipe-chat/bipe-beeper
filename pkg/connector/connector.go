@@ -16,6 +16,8 @@ type Connector struct {
 	br       *bridgev2.Bridge
 	Config   Config
 	sessions sessionRegistry
+	// Version is the bridge version. The device entry names it.
+	Version string
 }
 
 var _ bridgev2.NetworkConnector = (*Connector)(nil)
@@ -72,4 +74,11 @@ type UserLoginMetadata struct {
 	OAuthClientID      string `json:"oauth_client_id,omitempty"`
 	TokenEndpoint      string `json:"oauth_token_endpoint,omitempty"`
 	RevocationEndpoint string `json:"oauth_revocation_endpoint,omitempty"`
+
+	// LinkedAt is the link time in milliseconds. A login from before
+	// bipe-chat/bipe#1485 has none.
+	LinkedAt int64 `json:"linked_at,omitempty"`
+	// DeviceEntry is the last device entry that the bridge wrote
+	// (deviceinfo.go).
+	DeviceEntry *DeviceEntryRecord `json:"device_entry,omitempty"`
 }

@@ -6,8 +6,6 @@ import (
 	"errors"
 	"os"
 	"path/filepath"
-	"runtime"
-	"strings"
 
 	"github.com/rs/zerolog"
 
@@ -38,8 +36,8 @@ func deviceInfo(sess *storedSession, client string) bipe.DeviceInfo {
 		DeviceID: sess.DeviceID,
 		Source:   bipe.DeviceSourceSelf,
 		Kind:     bipe.DeviceKindAssistant,
-		Model:    machineName(),
-		OS:       systemName(),
+		Model:    bipe.MachineName(),
+		OS:       bipe.SystemName(),
 		App:      "bipe-mcp " + Version + " · " + bipe.ClientName(client),
 		Attested: false,
 	}
@@ -47,33 +45,6 @@ func deviceInfo(sess *storedSession, client string) bipe.DeviceInfo {
 		info.LinkedAt = sess.LinkedAt.UnixMilli()
 	}
 	return info.Clean()
-}
-
-// machineName is the host name without the .local suffix of macOS.
-func machineName() string {
-	name, err := os.Hostname()
-	if err != nil {
-		return ""
-	}
-	return strings.TrimSuffix(strings.TrimSpace(name), ".local")
-}
-
-// systemName is the system with its version where bipe-mcp can read it,
-// for example "macOS 26.1".
-func systemName() string {
-	switch runtime.GOOS {
-	case "darwin":
-		if v := macOSVersion(); v != "" {
-			return "macOS " + v
-		}
-		return "macOS"
-	case "windows":
-		return "Windows"
-	case "linux":
-		return "Linux"
-	default:
-		return runtime.GOOS
-	}
 }
 
 func loadDeviceRecord(dir string) *deviceRecord {

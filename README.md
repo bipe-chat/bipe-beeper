@@ -7,7 +7,7 @@ Status: early. The bridge syncs the chats of a Bipe account into Beeper, and you
 ## How it works
 
 - You run the bridge with Beeper Bridge Manager (`bbctl`) on a machine you control.
-- The bridge signs in to Bipe as a new device. You approve it on your phone in Bipe > Configurações > Aparelhos conectados > Conectar um computador.
+- The bridge signs in to Bipe as a new device. You approve it on your phone in Bipe > Configurações > Aparelhos e assistentes > Conectar computador ou navegador.
 - Beeper servers carry your messages encrypted (end-to-bridge encryption). The plaintext is only on your machine. Beeper sees room names, members and timing.
 
 Decision record: [ADR 0128](https://github.com/bipe-chat/bipe/blob/main/docs/adr/0128-beeper-bridge-per-user.md).
@@ -32,7 +32,7 @@ Set `network.homeserver_url: https://matrix.bipe.net.br` in `config.yaml`, then:
 ./build.sh && ./bipe-beeper -c config.yaml
 ```
 
-Open a chat with `@sh-bipebot:beeper.local` in Beeper, send `login` and scan the code with Bipe on the phone (Configurações > Aparelhos conectados > Conectar um computador).
+Open a chat with `@sh-bipebot:beeper.local` in Beeper, send `login` and scan the code with Bipe on the phone (Configurações > Aparelhos e assistentes > Conectar computador ou navegador).
 
 ## bipe-mcp: your chats in your own AI assistant
 

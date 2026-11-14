@@ -8,7 +8,7 @@ Read "What leaves Brazil" before you start. It explains what Beeper can see when
 
 - A Beeper account.
 - A computer that stays on: a Mac or a Linux machine. The bridge only works while this computer is on and online.
-- The Bipe app on your phone, version 26.10.2 build 9 or later (iPhone or Android). Older builds do not have Configurações > Aparelhos conectados > Conectar um computador, and you need that screen to sign in.
+- The Bipe app on your phone, version 26.10.2 build 9 or later (iPhone or Android). You need the screen Configurações > Aparelhos e assistentes > Conectar computador ou navegador to sign in. Older builds name it Configurações > Aparelhos conectados > Conectar um computador.
 - One of these, to build the bridge:
   - Go 1.27 and a C compiler. On a Mac, Xcode or the Xcode Command Line Tools give you the compiler. SQLite needs it.
   - Docker.
@@ -101,10 +101,10 @@ The bridge keeps its database and encryption keys in the file named in `database
 ## 5. Sign in with your phone
 
 1. In Beeper, open a chat with `@sh-bipebot:beeper.local` and send `login`.
-2. The bridge shows a QR code. On the phone, open Bipe > Configurações > Aparelhos conectados > Conectar um computador and scan it.
+2. The bridge shows a QR code. On the phone, open Bipe > Configurações > Aparelhos e assistentes > Conectar computador ou navegador and scan it.
 3. The phone shows a number with 2 digits. Type it in the chat with the bridge.
 4. If the phone opens a page with a code, type the code the bridge shows and confirm.
-5. The phone approves the new device. It shows as "Beeper" in Aparelhos conectados.
+5. The phone approves the new device. After the first sync, the bridge writes a device entry for itself in your account. The phone then shows "Beeper · ponte no seu computador · fora do Brasil" under Assistentes e programas in Aparelhos e assistentes.
 
 Each step after the scan must finish in about one minute. If the time runs out, the bridge says so. Send `login` again.
 
@@ -125,7 +125,7 @@ The people you talk to do not see that you use Beeper. Their messages reach Beep
 
 ## Turn it off
 
-1. On the phone, open Bipe > Configurações > Aparelhos conectados and disconnect "Beeper". This signs the bridge out of your Bipe account. The bridge cannot read new messages after this.
+1. On the phone, open Bipe > Configurações > Aparelhos e assistentes, tap "Beeper" under Assistentes e programas and tap Desconectar. This signs the bridge out of your Bipe account and stops the bridge: it cannot read new messages after this.
 2. Stop the bridge: press Ctrl+C, or `docker rm -f bipe-beeper`, or stop the service (see below).
 3. Delete the bridge from Beeper:
 

@@ -6,6 +6,7 @@ import (
 	"encoding/base64"
 	"fmt"
 	"strings"
+	"time"
 
 	"maunium.net/go/mautrix"
 	"maunium.net/go/mautrix/bridgev2"
@@ -94,6 +95,7 @@ func (l *TokenLogin) SubmitUserInput(ctx context.Context, input map[string]strin
 // completeLogin saves a login and connects it. Every login flow ends here.
 // beforeConnect, if set, runs after the save and before the sync starts.
 func completeLogin(ctx context.Context, user *bridgev2.User, userID id.UserID, meta *UserLoginMetadata, beforeConnect func(context.Context, *bridgev2.UserLogin)) (*bridgev2.LoginStep, error) {
+	meta.LinkedAt = time.Now().UnixMilli()
 	login, err := user.NewLogin(ctx, &database.UserLogin{
 		ID:         networkid.UserLoginID(userID),
 		RemoteName: userID.String(),

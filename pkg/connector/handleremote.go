@@ -67,6 +67,9 @@ func (c *Client) handleSync(ctx context.Context, resp *mautrix.RespSync, since s
 	}
 	if !c.connected.Swap(true) {
 		c.login.BridgeState.Send(status.BridgeState{StateEvent: status.StateConnected})
+		c.deviceEntryOnce.Do(func() {
+			go c.writeDeviceEntry(c.login.Log.WithContext(context.Background()))
+		})
 	}
 	return true
 }

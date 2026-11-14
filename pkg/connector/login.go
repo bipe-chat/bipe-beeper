@@ -265,8 +265,8 @@ func (l *PhoneQRLogin) waitForApproval(ctx context.Context) (*bridgev2.LoginStep
 	})
 }
 
-// setDeviceName names the new device "Beeper", so Linked devices on the phone
-// shows it. A failure does not stop the login.
+// setDeviceName names the new device "Beeper", so other Matrix apps
+// show it. A failure does not stop the login.
 func (l *PhoneQRLogin) setDeviceName(ctx context.Context, res *qrlogin.Result) {
 	cli, err := mautrix.NewClient(res.HomeserverURL, res.UserID, res.Session.AccessToken)
 	if err != nil {
