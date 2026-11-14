@@ -24,6 +24,9 @@ type storedSession struct {
 	UserID        string `json:"user_id"`
 	DeviceID      string `json:"device_id"`
 	PickleKey     string `json:"pickle_key"`
+	// LinkedAt is when the phone approved this device. Sessions from before
+	// ADR 0291 have none.
+	LinkedAt time.Time `json:"linked_at,omitzero"`
 
 	AccessToken       string    `json:"access_token"`
 	RefreshToken      string    `json:"refresh_token,omitempty"`
@@ -58,6 +61,12 @@ func (s *storedSession) setTokens(t qrlogin.Tokens) {
 
 func sessionPath(dir string) string { return filepath.Join(dir, "session.json") }
 func cryptoPath(dir string) string  { return filepath.Join(dir, "crypto.db") }
+
+// sessionFiles are the files of one signed-in device. login and logout
+// remove them.
+func sessionFiles(dir string) []string {
+	return []string{sessionPath(dir), cryptoPath(dir), cryptoPath(dir) + "-wal", cryptoPath(dir) + "-shm", devicePath(dir)}
+}
 
 // loadSession returns nil, nil when bipe-mcp has not signed in.
 func loadSession(dir string) (*storedSession, error) {

@@ -12,7 +12,7 @@ Decisions: [ADR 0130](https://github.com/bipe-chat/bipe/blob/main/docs/adr/0130-
 
 - A Mac or a Linux computer. Windows builds, but it has no lock against two copies (see "Limits").
 - Go 1.27 and a C compiler. SQLite needs the compiler. On a Mac, the Xcode Command Line Tools give it.
-- The Bipe app on your phone, with Configurações > Aparelhos conectados > Conectar um computador.
+- The Bipe app on your phone, with Configurações > Aparelhos e assistentes > Conectar computador ou navegador.
 
 ## 1. Install
 
@@ -32,7 +32,7 @@ Run this in a terminal. Make the terminal large enough for the QR code.
 bipe-mcp login
 ```
 
-1. On the phone, open Bipe > Configurações > Aparelhos conectados > Conectar um computador and scan the code.
+1. On the phone, open Bipe > Configurações > Aparelhos e assistentes > Conectar computador ou navegador and scan the code.
 2. Type the 2-digit number that the phone shows.
 3. On the phone, type the code that the terminal shows, and confirm.
 
@@ -45,10 +45,11 @@ The phone then sends the encryption keys. `bipe-mcp` verifies itself and downloa
 - `session.json` (mode 0600): the tokens of the device and the key of the crypto store.
 - `crypto.db`: the encryption keys of the device and the room keys.
 - `lock`: stops a second `bipe-mcp` with the same account.
+- `device-info.json` (mode 0600): the last device entry that `bipe-mcp` wrote, so it writes again only when a value changes.
 
 Use `--config DIR` (or `BIPE_MCP_CONFIG`) for another folder, and `--homeserver URL` for another homeserver.
 
-The phone shows the device as "bipe-mcp" in Aparelhos conectados. To sign out, run `bipe-mcp logout`, or remove the device on the phone.
+The phone shows the device in Aparelhos e assistentes, in the section Assistentes e programas, as an assistant "fora do Brasil". On the first start after the link, and on each start when a value changed, `bipe-mcp` writes its device entry (ADR 0291) to the drafts room: kind `assistant`, the app as "bipe-mcp <version> · <MCP client name>", the system, the machine name and the link date. The phone names the row from this entry. To sign out, run `bipe-mcp logout`, or remove the device on the phone.
 
 ## 3. Choose the scopes
 
@@ -95,7 +96,7 @@ The target chat must be a chat that you are in. The text must not be blank and h
 `send_message` has two locks (ADR 0210):
 
 1. The scope `content-send`, which you give with `--scopes`.
-2. The switch "Assistente pode enviar" in Bipe > Configurações > Privacidade on the phone. It is off by default. The phone writes the global account data `chat.bipe.assistant_send`.
+2. The switch "Assistente pode enviar" in Bipe > Configurações > Aparelhos e assistentes, section Assistentes, on the phone. The detail screen of the `bipe-mcp` row shows the same switch. It is off by default. The phone writes the global account data `chat.bipe.assistant_send`.
 
 `bipe-mcp` reads the switch from the server before every send. It sends only when the account data is exactly `{"enabled": true}`. Anything else, or a read error, is off. When the switch is off, the tool answers in Portuguese: turn on "Assistente pode enviar", or use `draft_message`. If you turn the switch off on the phone, the next send stops.
 

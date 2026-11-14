@@ -18,6 +18,7 @@ func TestCopiesMatchBipeShared(t *testing.T) {
 	for local, shared := range map[string]string{
 		"mcp-tools.json":               "registries/mcp-tools.json",
 		"drafts.json":                  "registries/drafts.json",
+		"device-kinds.json":            "registries/device-kinds.json",
 		"testdata/assistant-send.json": "test-vectors/assistant-send.json",
 		"testdata/drafts-vectors.json": "test-vectors/drafts.json",
 	} {

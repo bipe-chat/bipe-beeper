@@ -44,7 +44,7 @@ func runLogin(ctx context.Context, dir, homeserver string, in io.Reader, out io.
 		}
 		cancel()
 	}
-	for _, p := range []string{sessionPath(dir), cryptoPath(dir), cryptoPath(dir) + "-wal", cryptoPath(dir) + "-shm"} {
+	for _, p := range sessionFiles(dir) {
 		if err := os.Remove(p); err != nil && !errors.Is(err, os.ErrNotExist) {
 			return err
 		}
@@ -125,6 +125,7 @@ func runLogin(ctx context.Context, dir, homeserver string, in io.Reader, out io.
 		UserID:             string(res.UserID),
 		DeviceID:           string(res.DeviceID),
 		PickleKey:          newPickleKey(),
+		LinkedAt:           time.Now(),
 		OAuthClientID:      res.Session.ClientID,
 		TokenEndpoint:      res.Session.TokenEndpoint,
 		RevocationEndpoint: res.Session.RevocationEndpoint,

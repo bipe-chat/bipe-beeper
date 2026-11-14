@@ -342,6 +342,26 @@ func (s *Service) draftsRoom(ctx context.Context, joined []id.RoomID) (id.RoomID
 	return roomID, nil
 }
 
+// DraftsRoomID returns the drafts room ID from the account data, or "".
+func (s *Service) DraftsRoomID(ctx context.Context) (id.RoomID, error) { return s.draftsRoomID(ctx) }
+
+// WriteDeviceInfo sends a device entry (bipe ADR 0291) to the drafts room,
+// and creates the room when the account has none. It returns the room.
+func (s *Service) WriteDeviceInfo(ctx context.Context, info bipe.DeviceInfo) (id.RoomID, error) {
+	joined, err := s.mx.JoinedRooms(ctx)
+	if err != nil {
+		return "", err
+	}
+	roomID, err := s.draftsRoom(ctx, joined)
+	if err != nil {
+		return "", err
+	}
+	if _, err = s.mx.SendMessage(ctx, roomID, bipe.DeviceInfoContent(info)); err != nil {
+		return "", err
+	}
+	return roomID, nil
+}
+
 func (s *Service) messageInput(ctx context.Context, args json.RawMessage, failMsg string) (MessageInput, []id.RoomID, error) {
 	var in MessageInput
 	if err := decodeArgs(args, &in); err != nil {
