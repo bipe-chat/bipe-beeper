@@ -397,17 +397,7 @@ func (m *matrixClient) CreateDraftsRoom(ctx context.Context, name, roomType stri
 	if err := m.waitReady(ctx); err != nil {
 		return "", err
 	}
-	resp, err := m.cli.CreateRoom(ctx, &mautrix.ReqCreateRoom{
-		Visibility:      "private",
-		Preset:          "private_chat",
-		Name:            name,
-		CreationContent: map[string]any{"type": roomType},
-		InitialState: []*event.Event{
-			{Type: event.StateEncryption, Content: event.Content{Parsed: &event.EncryptionEventContent{Algorithm: id.AlgorithmMegolmV1}}},
-			{Type: event.StateJoinRules, Content: event.Content{Parsed: &event.JoinRulesEventContent{JoinRule: event.JoinRuleInvite}}},
-			{Type: event.StateHistoryVisibility, Content: event.Content{Parsed: &event.HistoryVisibilityEventContent{HistoryVisibility: event.HistoryVisibilityJoined}}},
-		},
-	})
+	resp, err := m.cli.CreateRoom(ctx, bipe.DraftsRoomRequest(name, roomType))
 	if err != nil {
 		return "", err
 	}

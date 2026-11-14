@@ -2,8 +2,8 @@ package bipe
 
 import "maunium.net/go/mautrix/oauth"
 
-// DeviceDisplayName is the name of the bridge device in Linked devices on
-// the phone.
+// DeviceDisplayName is the Matrix display name of the bridge device. The
+// phone names the device from its device entry (bridgedevice.go).
 const DeviceDisplayName = "Beeper"
 
 // OAuthClient is the client metadata that the bridge registers with MAS. MAS
@@ -21,7 +21,7 @@ const (
 	LoginFlowName        = "Entrar com o celular"
 	LoginFlowDescription = "Escaneie um código com o app do Bipe no celular."
 
-	LoginScanQR          = "No celular, abra Bipe > Configurações > Aparelhos conectados > Conectar um computador e escaneie este código."
+	LoginScanQR          = "No celular, abra Bipe > Configurações > Aparelhos e assistentes > Conectar computador ou navegador e escaneie este código."
 	LoginTypeCheckCode   = "Digite o número de 2 dígitos que aparece no celular."
 	LoginCheckCodeField  = "Número de 2 dígitos"
 	LoginCheckCodeHelp   = "O número que o celular mostra depois de ler o código."

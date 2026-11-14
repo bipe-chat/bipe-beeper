@@ -24,7 +24,7 @@ func (e *inputError) Error() string { return e.msg }
 func userError(msg string) error { return &inputError{msg: msg} }
 
 // validRoomID tells if s is a room ID in the form the drafts rule takes.
-func validRoomID(s string) bool { return strings.HasPrefix(s, "!") && len(s) > 1 }
+func validRoomID(s string) bool { return bipe.ValidRoomID(s) }
 
 // validEventID tells if s is an event ID in the form the drafts rule takes.
 func validEventID(s string) bool { return strings.HasPrefix(s, "$") && len(s) > 1 }

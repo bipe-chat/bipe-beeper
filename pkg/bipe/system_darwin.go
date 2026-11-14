@@ -1,6 +1,6 @@
 //go:build darwin
 
-package main
+package bipe
 
 import "golang.org/x/sys/unix"
 
