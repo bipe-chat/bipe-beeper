@@ -31,6 +31,8 @@ type fakeMatrix struct {
 	accountData map[string]json.RawMessage
 	accountErr  error
 	state       map[string]json.RawMessage
+	// stateSender overrides the sender of a state event; default: the state key.
+	stateSender map[string]id.UserID
 	stateErr    error
 	created     []id.RoomID
 	sent        []sentMessage
@@ -75,11 +77,20 @@ func (f *fakeMatrix) SetAccountData(_ context.Context, t string, content any) er
 	f.accountData[t] = data
 	return nil
 }
-func (f *fakeMatrix) RoomState(_ context.Context, roomID id.RoomID, t, key string) (json.RawMessage, error) {
+func (f *fakeMatrix) RoomState(_ context.Context, roomID id.RoomID, t, key string) (json.RawMessage, id.UserID, error) {
 	if f.stateErr != nil {
-		return nil, f.stateErr
+		return nil, "", f.stateErr
 	}
-	return f.state[string(roomID)+"|"+t+"|"+key], nil
+	k := string(roomID) + "|" + t + "|" + key
+	raw := f.state[k]
+	if raw == nil {
+		return nil, "", nil
+	}
+	sender, ok := f.stateSender[k]
+	if !ok {
+		sender = id.UserID(key)
+	}
+	return raw, sender, nil
 }
 func (f *fakeMatrix) SetRoomState(_ context.Context, roomID id.RoomID, t, key string, content any) error {
 	if f.setStateErr != nil {
@@ -275,6 +286,18 @@ func TestReadChatNeedsFullContent(t *testing.T) {
 	if _, msg := call(t, svc, "read_chat", `{"room_id":"!chat:bipe.net.br"}`); msg != bipe.MCPFullContentOff {
 		t.Fatalf("other member's event: %q", msg)
 	}
+	// bipe#1376: an event under the user's key that another member sent is
+	// off, and so is an event with no sender.
+	f.state[key] = json.RawMessage(`{"full_content":true}`)
+	f.stateSender = map[string]id.UserID{key: "@bia:bipe.net.br"}
+	if _, msg := call(t, svc, "read_chat", `{"room_id":"!chat:bipe.net.br"}`); msg != bipe.MCPFullContentOff {
+		t.Fatalf("event sent by another member: %q", msg)
+	}
+	f.stateSender[key] = ""
+	if _, msg := call(t, svc, "read_chat", `{"room_id":"!chat:bipe.net.br"}`); msg != bipe.MCPFullContentOff {
+		t.Fatalf("event with no sender: %q", msg)
+	}
+	f.stateSender = nil
 	// A read error is off.
 	f.state[key] = json.RawMessage(`{"full_content":true}`)
 	f.stateErr = errors.New("network")
