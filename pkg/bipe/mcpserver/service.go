@@ -33,7 +33,8 @@ type Matrix interface {
 	SetAccountData(ctx context.Context, eventType string, content any) error
 	// RoomState returns the content of a state event, or nil when the room
 	// has none.
-	RoomState(ctx context.Context, roomID id.RoomID, eventType, stateKey string) (json.RawMessage, error)
+	// RoomState returns the content and the sender of a state event; nil content when there is none.
+	RoomState(ctx context.Context, roomID id.RoomID, eventType, stateKey string) (json.RawMessage, id.UserID, error)
 	// SetRoomState sends a state event.
 	SetRoomState(ctx context.Context, roomID id.RoomID, eventType, stateKey string, content any) error
 	// CreateDraftsRoom creates the encrypted, invite-only drafts room with
@@ -241,10 +242,13 @@ func (s *Service) readMyMessages(ctx context.Context, args json.RawMessage) (any
 }
 
 // fullContentOn reads the chat.bipe.assistant state event of the user. Any
-// error means off.
+// error means off. The event counts only when the user sent it (bipe#1376):
+// the auth rules already allow only that user to send a state key that is
+// its own ID, so this is defence in depth. A missing sender means off.
 func (s *Service) fullContentOn(ctx context.Context, roomID id.RoomID) bool {
-	raw, err := s.mx.RoomState(ctx, roomID, bipe.FullContentEventType, string(s.mx.UserID()))
-	return err == nil && bipe.FullContentOn(raw)
+	own := s.mx.UserID()
+	raw, sender, err := s.mx.RoomState(ctx, roomID, bipe.FullContentEventType, string(own))
+	return err == nil && sender == own && bipe.FullContentOn(raw)
 }
 
 // readChat returns every message of a chat, only while the user's
