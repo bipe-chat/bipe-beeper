@@ -53,6 +53,8 @@ func openMatrix(ctx context.Context, dir string, sess *storedSession, tokens *to
 	// Info level: mautrix-go logs request bodies at debug level.
 	cli.Log = log.With().Str("component", "matrix").Logger().Level(zerolog.InfoLevel)
 	tokens.attach(cli)
+	// bipe#1377: mautrix-go also logs the body on warnings and errors.
+	bipe.NoRequestBodiesInLog(cli)
 	if tokens.expiresWithin(refreshMargin) {
 		if err = tokens.Refresh(ctx); errors.Is(err, errSessionEnded) {
 			return nil, err

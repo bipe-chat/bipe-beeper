@@ -19,6 +19,7 @@ import (
 	"maunium.net/go/mautrix/event"
 	"maunium.net/go/mautrix/id"
 
+	"github.com/bipe-chat/bipe-beeper/pkg/bipe"
 	"github.com/bipe-chat/bipe-beeper/pkg/qrlogin"
 )
 
@@ -93,6 +94,8 @@ func NewClient(main *Connector, login *bridgev2.UserLogin) *Client {
 	}
 	cli.DeviceID = id.DeviceID(meta.DeviceID)
 	cli.Log = login.Log.With().Str("component", "remote matrix").Logger()
+	// bipe#1377: method, URL and status only; never a request body.
+	bipe.NoRequestBodiesInLog(cli)
 	c.cli = cli
 	c.loggedIn.Store(true)
 	return c
