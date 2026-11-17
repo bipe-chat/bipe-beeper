@@ -373,16 +373,21 @@ func (m *matrixClient) SetAccountData(ctx context.Context, eventType string, con
 
 func stateType(t string) event.Type { return event.Type{Type: t, Class: event.StateEventType} }
 
-func (m *matrixClient) RoomState(ctx context.Context, roomID id.RoomID, eventType, stateKey string) (json.RawMessage, error) {
+// RoomState reads the whole state event (?format=event, Synapse), so the
+// caller can check the sender. A server that returns content only gives no
+// sender, and the caller treats that as no event.
+func (m *matrixClient) RoomState(ctx context.Context, roomID id.RoomID, eventType, stateKey string) (json.RawMessage, id.UserID, error) {
 	if m.tokens.Ended() {
-		return nil, mcpserver.UserError(bipe.MCPSessionEnded)
+		return nil, "", mcpserver.UserError(bipe.MCPSessionEnded)
 	}
-	var raw json.RawMessage
-	err := m.cli.StateEvent(ctx, roomID, stateType(eventType), stateKey, &raw)
+	evt, err := m.cli.FullStateEvent(ctx, roomID, stateType(eventType), stateKey)
 	if errors.Is(err, mautrix.MNotFound) {
-		return nil, nil
+		return nil, "", nil
 	}
-	return raw, err
+	if err != nil || evt == nil {
+		return nil, "", err
+	}
+	return evt.Content.VeryRaw, evt.Sender, nil
 }
 
 func (m *matrixClient) SetRoomState(ctx context.Context, roomID id.RoomID, eventType, stateKey string, content any) error {
